@@ -1,6 +1,7 @@
 <template>
   <div class="dashboard-container">
-    <component :is="currentRole" />
+    <h2>CMS后台管理系统</h2>
+    <!-- <component :is="currentRole" /> -->
   </div>
 </template>
 
