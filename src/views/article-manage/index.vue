@@ -109,11 +109,13 @@
 
 <script>
 import {
+  test,
   fetchList,
   fetchPv,
   createArticle,
-  updateArticle
-} from '@/api/article'
+  updateArticle,
+  fetchCategoryListForChose
+} from '@/api/article-manage'
 import waves from '@/directive/waves' // waves directive
 import { parseTime } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
@@ -205,9 +207,14 @@ export default {
     }
   },
   created() {
+    this.getCategory()
     this.getList()
   },
   methods: {
+    async getCategory() {
+      const res = await test()
+      console.log(res)
+    },
     bathConfirm(item) {
       this.currentBath = item
       this.batchDialogShow = true

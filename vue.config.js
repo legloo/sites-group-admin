@@ -30,6 +30,21 @@ module.exports = {
   lintOnSave: process.env.NODE_ENV === 'development',
   productionSourceMap: false,
   devServer: {
+    // proxy: {
+    //   '/dev-api': {
+    //     target: 'https://api.myjson.com/',  //目标接口域名
+    //     changeOrigin: true,  //是否跨域
+    //     pathRewrite: {
+    //       '^/dev-api': ''   //重写接口
+    //     }
+    //   }
+    // },
+    proxy: {
+      "/dev-api": {
+        target: "https://api.myjson.com",
+        pathRewrite: {"^/dev-api" : ""}
+      }
+    },
     port: port,
     open: true,
     overlay: {
@@ -93,7 +108,7 @@ module.exports = {
             .plugin('ScriptExtHtmlWebpackPlugin')
             .after('html')
             .use('script-ext-html-webpack-plugin', [{
-            // `runtime` must same as runtimeChunk name. default is `runtime`
+              // `runtime` must same as runtimeChunk name. default is `runtime`
               inline: /runtime\..*\.js$/
             }])
             .end()
