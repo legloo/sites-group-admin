@@ -107,5 +107,17 @@ export function resetRouter() {
   const newRouter = createRouter()
   router.matcher = newRouter.matcher // reset router
 }
+// router.beforeEach((to, from, next) => {
+//   console.log(to);
+//   if(to.path === '/articleManage/actions'){
+//     if(to.query && to.query.code === 'add'){
+//       to.meta = '新增文章'
+//     }
+//     if(to.query && to.query.code === 'add'){
+//       to.meta = '新增文章'
+//     }
+//   }
+//   next()
+// })
 
 export default router

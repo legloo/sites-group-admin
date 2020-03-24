@@ -7,6 +7,13 @@ import 'normalize.css/normalize.css' // a modern alternative to CSS resets
 import Element from 'element-ui'
 import './styles/element-variables.scss'
 
+import VueQuillEditor from 'vue-quill-editor'
+ 
+// require styles
+import 'quill/dist/quill.core.css'
+import 'quill/dist/quill.snow.css'
+import 'quill/dist/quill.bubble.css'
+
 import '@/styles/index.scss' // global css
 
 import App from './App'
@@ -35,6 +42,7 @@ if (process.env.NODE_ENV === 'production') {
 Vue.use(Element, {
   size: Cookies.get('size') || 'medium' // set element-ui default size
 })
+Vue.use(VueQuillEditor, /* { default global options } */)
 
 // register global utility filters
 Object.keys(filters).forEach(key => {
