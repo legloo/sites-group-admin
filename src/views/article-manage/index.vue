@@ -396,7 +396,6 @@ export default {
     },
     async getList() {
       this.listLoading = true;
-      console.log(this.listQuery);
       let body = {
         startTime:
           this.listQuery.time && this.listQuery.time.length
@@ -416,7 +415,6 @@ export default {
         source: this.listQuery.source
       };
       let req = this.formatReq(body);
-      console.log(req);
       let res = await fetchArticleList(this.listQuery, req);
       if (res.code == "000000") {
         this.tableData = res.data.contents;

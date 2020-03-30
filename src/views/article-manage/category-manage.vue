@@ -88,7 +88,6 @@ export default {
   methods: {
     async getlist() {
       let res = await fetchCategoryList();
-      console.log(res);
       if (res.code == "000000") {
         this.tableData = res.data;
       }

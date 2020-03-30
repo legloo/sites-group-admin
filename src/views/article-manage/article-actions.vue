@@ -95,7 +95,7 @@ export default {
     },
     async getArt() {
       let res1 = await getArticleDetail(this.artId);
-      let res = res1.data
+      let res = res1.data;
       this.formModal.title = res.title;
       this.formModal.type = res.type;
       this.formModal.source = res.source;
@@ -106,7 +106,6 @@ export default {
       this.upload_img = res.headImgUrl;
     },
     async submit() {
-      console.log(this.formModal);
       let req = {
         title: this.formModal.title,
         type: this.formModal.type,
@@ -118,16 +117,47 @@ export default {
         content: this.formModal.content
       };
       let data = new FormData();
-      for(let key in req){
-       data.append(key,req[key]);
+      for (let key in req) {
+        if (!req[key]) return this.$message.info("参数不能为空");
+        data.append(key, req[key]);
       }
-      if(this.currentPage.code === 'add'){
-      let res = await createArticle(data);
-      console.log(res);
+      if (this.currentPage.code === "add") {
+        let res = await createArticle(data);
+        if (res.code == "000000") {
+          this.$message.success(res.msg);
+          this.$store
+            .dispatch("tagsView/delView", this.$route)
+            .then(({ visitedViews }) => {
+              this.toLastView(visitedViews, this.$route);
+            });
+        }
       }
-      if(this.currentPage.code === 'edit'){
-      let res = await editArticle(this.artId,data);
-      console.log(res);
+      if (this.currentPage.code === "edit") {
+        let res = await editArticle(this.artId, data);
+        if (res.code == "000000") {
+          this.$message.success(res.msg);
+          this.$store
+            .dispatch("tagsView/delView", this.$route)
+            .then(({ visitedViews }) => {
+              this.toLastView(visitedViews, this.$route);
+            });
+        }
+      }
+    },
+
+    toLastView(visitedViews, view) {
+      const latestView = visitedViews.slice(-1)[0];
+      if (latestView) {
+        this.$router.push(latestView.fullPath);
+      } else {
+        // now the default is to redirect to the home page if there is no tags-view,
+        // you can adjust it according to your needs.
+        if (view.name === "Dashboard") {
+          // to reload home page
+          this.$router.replace({ path: "/redirect" + view.fullPath });
+        } else {
+          this.$router.push("/");
+        }
       }
     },
     route_back() {
@@ -214,8 +244,7 @@ export default {
         summary: "",
         content: ""
       },
-      upload_img:
-        "https://article-site-dev.oss-cn-hangzhou.aliyuncs.com/images/8f5ccbc53b874c92b266c30e88f98c3d.jpeg",
+      upload_img: "",
       keywords_g: [],
       typeOpitons: []
     };
