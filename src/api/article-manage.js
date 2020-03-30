@@ -1,11 +1,11 @@
 import request from '@/utils/request'
 
-export function fetchArticleList(query) {
+export function fetchArticleList(query, body) {
   // 文章管理列表
   return request({
-    url: '/api/article/list',
+    url: `/api/article/admin/list/${query.page}/${query.size}`,
     method: 'get',
-    params: query
+    params: body
   })
 }
 
@@ -20,16 +20,16 @@ export function test() {
 // 新增文章
 export function createArticle(data) {
   return request({
-    url: '/api/article/add',
+    url: '/api/article/admin/add',
     method: 'post',
     data
   })
 }
 
 // 编辑文章
-export function editArticle(data) {
+export function editArticle(id,data) {
   return request({
-    url: `/api/article/update/${data.id}`,
+    url: `/api/article/admin/update/${id}`,
     method: 'put',
     data
   })
@@ -37,9 +37,9 @@ export function editArticle(data) {
 
 // 获取文章detail
 
-export function getArticleDetail(data) {
+export function getArticleDetail(id) {
   return request({
-    url: `/api/article/view/${data.id}`,
+    url: `/api/article/admin/view/${id}`,
     method: 'get'
   })
 }
@@ -53,9 +53,9 @@ export function fetchCategoryListForChose() {
 }
 
 // 删除单个文章
-export function deleteArticle(data) {
+export function deleteArticle(id) {
   return request({
-    url: `/api/article/delete/${data.id}`,
+    url: `/api/article/admin/delete/${id}`,
     method: 'delete'
   })
 }
@@ -63,7 +63,7 @@ export function deleteArticle(data) {
 // batch删除文章
 export function deleteArticleBatch(data) {
   return request({
-    url: `/api/article/delete/_batch`,
+    url: `/api/article/admin/delete/_batch`,
     method: 'delete',
     data
   })
@@ -72,7 +72,7 @@ export function deleteArticleBatch(data) {
 // 文章online/offline
 export function lineArticle(data) {
   return request({
-    url: `/api/article/online/${data.id}?status=${data.status}`,
+    url: `/api/article/admin/online/${data.id}?status=${data.status}`,
     method: 'put'
   })
 }
@@ -80,7 +80,7 @@ export function lineArticle(data) {
 // batch文章online/offline
 export function lineArticleBath(status, data) {
   return request({
-    url: `/api/article/online/_batch?status=${status}`,
+    url: `/api/article/admin/online/_batch?status=${status}`,
     method: 'put',
     data
   })
@@ -89,7 +89,7 @@ export function lineArticleBath(status, data) {
 // 文章re/unre
 export function reArticle(data) {
   return request({
-    url: `/api/article/recommend/${data.id}?recommend=${data.recommend}`,
+    url: `/api/article/admin/recommend/${data.id}?recommend=${data.recommend}`,
     method: 'put'
   })
 }
@@ -121,9 +121,9 @@ export function createCategory(data) {
 }
 
 // 编辑文章分类
-export function editCategory(data) {
+export function editCategory(id, data) {
   return request({
-    url: `/api/articleType/update/${data.id}`,
+    url: `/api/articleType/update/${id}`,
     method: 'put',
     data
   })
@@ -134,6 +134,15 @@ export function deleteCategory(data) {
   return request({
     url: `api/articleType/delete/${data.id}`,
     method: 'delete'
+  })
+}
+
+//图片上传
+export function fileUpload(data) {
+  return request({
+    url: '/api/common/file/upload',
+    method: 'post',
+    data
   })
 }
 

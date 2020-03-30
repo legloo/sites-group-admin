@@ -48,78 +48,115 @@ import {
   createCategory,
   editCategory,
   deleteCategory
-} from '@/api/article-manage'
+} from "@/api/article-manage";
 export default {
   data() {
     return {
       rules: {
-        name: [{ required: true, message: '请输入分类名称', trigger: 'blur' }]
+        name: [{ required: true, message: "请输入分类名称", trigger: "blur" }]
       },
       tableData: [
         {
-          id: '1',
-          name: '分类1',
+          id: "1",
+          name: "分类1",
           empty: false
         },
         {
-          id: '2',
-          name: '分类2',
+          id: "2",
+          name: "分类2",
           empty: true
         }
       ],
       currentDialogItem: {
-        id: '',
-        name: ''
+        id: "",
+        name: ""
       },
       dialog: {
-        title: '',
+        title: "",
         show: false
       },
       deleteDialog: {
-        title: '提示',
-        tips: '是否确认删除该分类？',
+        title: "提示",
+        tips: "是否确认删除该分类？",
         show: false
       }
-    }
+    };
+  },
+  created() {
+    this.getlist();
   },
   methods: {
+    async getlist() {
+      let res = await fetchCategoryList();
+      console.log(res);
+      if (res.code == "000000") {
+        this.tableData = res.data;
+      }
+    },
     handleClick(row, type) {
-      if (type === 'delete') {
-        this.currentDialogItem = row
-        this.deleteDialog.show = true
+      if (type === "delete") {
+        this.currentDialogItem = row;
+        this.deleteDialog.show = true;
       }
-      if (type === 'add') {
-        this.currentDialogItem.name = ''
-        this.dialog.title = '添加分类'
-        this.dialog.show = true
+      if (type === "add") {
+        this.currentDialogItem.name = "";
+        this.dialog.title = "添加分类";
+        this.dialog.show = true;
       }
-      if (type === 'edit') {
-        this.currentDialogItem = row
-        this.dialog.title = '编辑分类'
-        this.dialog.show = true
+      if (type === "edit") {
+        this.currentDialogItem = row;
+        this.dialog.title = "编辑分类";
+        this.dialog.show = true;
       }
     },
     async dialogOk() {
       if (this.currentDialogItem.id) {
+        let datae = new FormData();
+        datae.append("id", this.currentDialogItem.id);
+        datae.append("type", this.currentDialogItem.name);
         // 有id则为改
-        const params = {
-          id: this.currentDialogItem.id,
-          name: this.currentDialogItem.name
+        const res = await editCategory(this.currentDialogItem.id,datae);
+        if (res.code == "000000") {
+          this.$message.success(res.msg);
+          this.currentDialogItem = {
+            id: "",
+            name: ""
+          };
+          this.dialog.show = false;
+          this.getlist();
+        } else {
+          this.$message.error(res.msg);
         }
-        const res = await editCategory(params)
-        console.log(res)
       } else {
         // 无id则为新增
-        const res = await createCategory({ name: this.currentDialogItem.name })
-        console.log(res)
+        let data = new FormData();
+        data.append("type", this.currentDialogItem.name);
+        const res = await createCategory(data);
+        if (res.code == "000000") {
+          this.$message.success(res.msg);
+          this.currentDialogItem = {
+            id: "",
+            name: ""
+          };
+          this.dialog.show = false;
+          this.getlist();
+        } else {
+          this.$message.error(res.msg);
+        }
       }
     },
     async deleteItem() {
-      const res = await deleteCategory({ id: this.currentDialogItem.id })
-      console.log(res)
+      const res = await deleteCategory({ id: this.currentDialogItem.id });
+       if (res.code == "000000") {
+          this.$message.success(res.msg);
+          this.deleteDialog.show = false;
+          this.getlist();
+        } else {
+          this.$message.error(res.msg);
+        }
     }
   }
-}
+};
 </script>
 
 <style lang="scss" scoped>

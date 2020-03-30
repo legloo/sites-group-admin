@@ -10,8 +10,12 @@
       </el-form-item>
       <el-form-item label="文章分类：">
         <el-select v-model="formModal.type" placeholder="选择分类">
-          <el-option label="分类1" value="1" />
-          <el-option label="分类2" value="2" />
+          <el-option
+            v-for="(item,index) in typeOpitons"
+            :key="'cate'+index"
+            :label="item.name"
+            :value="item.id"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="关键词：">
@@ -63,6 +67,13 @@
 </template>
 
 <script>
+import {
+  fileUpload,
+  fetchCategoryListForChose,
+  createArticle,
+  getArticleDetail,
+  editArticle
+} from "@/api/article-manage";
 export default {
   created() {
     let query = this.$route.query;
@@ -73,21 +84,18 @@ export default {
       this.artId = query.id;
       this.getArt();
     }
+    this.getCateList();
   },
   methods: {
+    async getCateList() {
+      let res = await fetchCategoryListForChose();
+      if (res.code == "000000") {
+        this.typeOpitons = res.data;
+      }
+    },
     async getArt() {
-      let res = {
-        articleId: "1",
-        content: "<p>hahaah</p>",
-        headImgDesc: "头条描述",
-        headImgUrl: "https://img.yzcdn.cn/vant/apple-2.jpg",
-        keywords: ["中文", "英文"],
-        source: "来源",
-        summary: "摘要",
-        title: "标题",
-        type: "1",
-        typeDesc: "新闻"
-      };
+      let res1 = await getArticleDetail(this.artId);
+      let res = res1.data
       this.formModal.title = res.title;
       this.formModal.type = res.type;
       this.formModal.source = res.source;
@@ -97,7 +105,7 @@ export default {
       this.keywords_g = res.keywords;
       this.upload_img = res.headImgUrl;
     },
-    submit() {
+    async submit() {
       console.log(this.formModal);
       let req = {
         title: this.formModal.title,
@@ -109,25 +117,48 @@ export default {
         summary: this.formModal.summary,
         content: this.formModal.content
       };
+      let data = new FormData();
+      for(let key in req){
+       data.append(key,req[key]);
+      }
+      if(this.currentPage.code === 'add'){
+      let res = await createArticle(data);
+      console.log(res);
+      }
+      if(this.currentPage.code === 'edit'){
+      let res = await editArticle(this.artId,data);
+      console.log(res);
+      }
     },
-    route_back(){
+    route_back() {
       this.$router.go(-1);
     },
     beforeupload(f) {
-      this.imageToBase64(f);
+      // this.imageToBase64(f);
+      this.imgUpload(f);
       return false;
     },
-    imageToBase64(file) {
-      var reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        this.upload_img = "https://img.yzcdn.cn/vant/apple-2.jpg";
-        // this.upload_img = reader.result;
-      };
-      reader.onerror = function(error) {
-        console.log("Error: ", error);
-      };
+    async imgUpload(f) {
+      let data = new FormData();
+      data.append("file", f);
+      data.append("filePath", "images");
+      data.append("suffix", f.name.split(".")[1]);
+      let res = await fileUpload(data);
+      if (res.code == "000000") {
+        this.upload_img = res.data;
+      }
     },
+    // imageToBase64(file) {
+    //   var reader = new FileReader();
+    //   reader.readAsDataURL(file);
+    //   reader.onload = () => {
+    //     this.upload_img = "https://img.yzcdn.cn/vant/apple-2.jpg";
+    //     // this.upload_img = reader.result;
+    //   };
+    //   reader.onerror = function(error) {
+    //     console.log("Error: ", error);
+    //   };
+    // },
     keywords_actions(item, value) {
       if (item === "add") {
         this.keywords_g.push(this.formModal.keywords);
@@ -183,9 +214,10 @@ export default {
         summary: "",
         content: ""
       },
-      upload_img: "",
+      upload_img:
+        "https://article-site-dev.oss-cn-hangzhou.aliyuncs.com/images/8f5ccbc53b874c92b266c30e88f98c3d.jpeg",
       keywords_g: [],
-      typeOpitons: [{}]
+      typeOpitons: []
     };
   }
 };

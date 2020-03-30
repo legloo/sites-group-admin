@@ -53,11 +53,9 @@
 
 <script>
 import { validUsername } from '@/utils/validate'
-import SocialSign from './components/SocialSignin'
 
 export default {
   name: 'Login',
-  components: { SocialSign },
   data() {
     const validateUsername = (rule, value, callback) => {
       if (!validUsername(value)) {
@@ -76,7 +74,7 @@ export default {
     return {
       loginForm: {
         username: 'admin',
-        password: '111111'
+        password: 'admindev'
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],

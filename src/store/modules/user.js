@@ -33,19 +33,20 @@ const actions = {
   login({ commit }, userInfo) {
     const { username, password } = userInfo
     return new Promise((resolve, reject) => {
-      // login({ username: username.trim(), password: password }).then(response => {
-      const { data } = {
-        data: {
-          token: 'admin-token'
+      login({ userName: username.trim(), password: password }).then(response => {
+        if (response.code != '000000') return;
+        const { data } = {
+          data: {
+            token: 'admin-tokena'
+          }
         }
-      }
-      commit('SET_NAME', username)
-      commit('SET_TOKEN', data.token)
-      setToken(data.token)
-      resolve()
-      // }).catch(error => {
-      //   reject(error)
-      // })
+        commit('SET_NAME', username)
+        commit('SET_TOKEN', data.token)
+        setToken(data.token)
+        resolve()
+      }).catch(error => {
+        reject(error)
+      })
     })
   },
 

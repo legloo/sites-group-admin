@@ -41,7 +41,7 @@ module.exports = {
     // },
     proxy: {
       "/dev-api": {
-        target: "https://api.myjson.com",
+        target: "http://3027nq6031.qicp.vip",
         pathRewrite: {"^/dev-api" : ""}
       }
     },

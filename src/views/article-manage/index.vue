@@ -5,7 +5,7 @@
         <el-form-item label="发布时间">
           <el-date-picker
             v-model="listQuery.time"
-            type="datetimerange"
+            type="daterange"
             range-separator="至"
             start-placeholder="开始日期"
             end-placeholder="结束日期"
@@ -17,14 +17,18 @@
 
         <el-form-item label="分类">
           <el-select v-model="listQuery.type" placeholder="选择分类">
-            <el-option label="分类1" value="1" />
-            <el-option label="分类2" value="2" />
+            <el-option
+              v-for="(item,index) in typeOpitons"
+              :key="'cate'+index"
+              :label="item.name"
+              :value="item.id"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="上线状态">
           <el-select v-model="listQuery.status" placeholder="选择状态">
-            <el-option label="状态1" value="1" />
-            <el-option label="状态2" value="0" />
+            <el-option label="上线" value="1" />
+            <el-option label="下线" value="0" />
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
@@ -37,10 +41,11 @@
           </el-select>
         </el-form-item>
         <el-form-item label="文章来源">
-          <el-input v-model="listQuery.source" placeholder="文章标题" />
+          <el-input v-model="listQuery.source" placeholder="文章来源" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="onSearch">查询</el-button>
+          <el-button type="primary" @click="reset">重置</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -74,14 +79,14 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" />
-      <el-table-column prop="articleId" label="id" width="55" />
+      <el-table-column prop="articleId" label="id" width="305" />
       <el-table-column label="发布时间" width="170">
-        <template slot-scope="scope">{{ scope.row.onlineTime }}</template>
+        <template slot-scope="scope">{{ scope.row.gmtCreated }}</template>
       </el-table-column>
       <el-table-column prop="title" label="文章标题" width="200" show-overflow-tooltip />
       <el-table-column prop="type" label="文章分类" width="200" show-overflow-tooltip />
       <el-table-column label="关键词" show-overflow-tooltip width="200">
-        <template slot-scope="scope">{{ scope.row.keywords.join(';') }}</template>
+        <template slot-scope="scope">{{ scope.row.keywords ? scope.row.keywords.join(';') :''}}</template>
       </el-table-column>
       <el-table-column prop="source" label="文章来源" show-overflow-tooltip />
       <el-table-column label="上线状态" show-overflow-tooltip>
@@ -90,12 +95,33 @@
       <el-table-column fixed="right" label="操作" width="400">
         <template slot-scope="{row}">
           <el-button type="primary" size="mini">预览</el-button>
-          <el-button v-if="row.status == '1'" size="mini" type="primary">下线</el-button>
-          <el-button v-if="row.status == '0'" size="mini" type="primary">上线</el-button>
-          <el-button v-if="row.recommend == '1'" type="primary" size="mini">推荐</el-button>
-          <el-button v-if="row.recommend == '0'" type="primary" size="mini">取消推荐</el-button>
+          <el-button
+            v-if="row.status == '1'"
+            size="mini"
+            type="primary"
+            @click="aloneActions('offline','下线',row)"
+          >下线</el-button>
+          <el-button
+            v-if="row.status == '0'"
+            size="mini"
+            type="primary"
+            @click="aloneActions('online','上线',row)"
+          >上线</el-button>
+          <el-button
+            style="width:80px"
+            v-if="row.recommend == '1'"
+            type="primary"
+            size="mini"
+            @click="aloneActions('recom','推荐',row)"
+          >推荐</el-button>
+          <el-button
+            v-if="row.recommend == '0'"
+            type="primary"
+            size="mini"
+            @click="aloneActions('unrecom','推荐',row)"
+          >取消推荐</el-button>
           <el-button size="mini" type="primary" @click="editArticle(row)">编辑</el-button>
-          <el-button size="mini" type="danger">删除</el-button>
+          <el-button size="mini" type="danger" @click="aloneActions('delete','删除',row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -115,22 +141,35 @@
         <el-button type="primary" @click="batchActions">确 定</el-button>
       </span>
     </el-dialog>
+    <el-dialog title="文章操作" :visible.sync="aloneDialog.show" width="30%">
+      <span>{{ `确认此${aloneDialog.name}操作吗?` }}</span>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="aloneDialog.show= false">取 消</el-button>
+        <el-button type="primary" @click="aloneActionsDown">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import {
   test,
-  fetchList,
+  fetchArticleList,
   fetchPv,
   createArticle,
   updateArticle,
-  fetchCategoryListForChose
+  fetchCategoryListForChose,
+  deleteArticle,
+  lineArticle,
+  reArticle,
+  lineArticleBath,
+  unreArticleBath,
+  deleteArticleBatch
 } from "@/api/article-manage";
 import waves from "@/directive/waves"; // waves directive
 import { parseTime } from "@/utils";
 import Pagination from "@/components/Pagination"; // secondary package based on el-pagination
-
+import moment from "moment";
 export default {
   name: "ArticleManage",
   components: { Pagination },
@@ -150,7 +189,13 @@ export default {
   },
   data() {
     return {
+      typeOpitons: [],
       batchDialogShow: false,
+      aloneDialog: {
+        show: false,
+        name: ""
+      },
+      aloneItem: {},
       currentBath: {
         name: ""
       },
@@ -171,22 +216,22 @@ export default {
             status: 0
           }
         },
-        {
-          name: "推荐",
-          type: "primary",
-          code: "recommend",
-          params: {
-            recommend: 1
-          }
-        },
-        {
-          name: "取消推荐",
-          type: "warning",
-          code: "recommend",
-          params: {
-            recommend: 0
-          }
-        },
+        // {
+        //   name: "推荐",
+        //   type: "primary",
+        //   code: "recommend",
+        //   params: {
+        //     recommend: 1
+        //   }
+        // },
+        // {
+        //   name: "取消推荐",
+        //   type: "warning",
+        //   code: "recommend",
+        //   params: {
+        //     recommend: 0
+        //   }
+        // },
         {
           name: "删除",
           type: "danger",
@@ -219,7 +264,8 @@ export default {
         type: "",
         keyword: "",
         recommend: "",
-        source: ""
+        source: "",
+        status: ""
       },
       multipleSelection: []
     };
@@ -234,33 +280,106 @@ export default {
     this.getList();
   },
   methods: {
-    editArticle(item){
-      this.$router.push(`actions?code=edit&id=${item.articleId}`)
+    reset() {
+      this.listQuery = {
+        page: 1,
+        size: 20,
+        time: [],
+        title: "",
+        type: "",
+        keyword: "",
+        recommend: "",
+        source: ""
+      };
+      this.getList();
     },
-    routeClick(item){
-      this.$router.push(item.path)
+    editArticle(item) {
+      this.$router.push(`actions?code=edit&id=${item.articleId}`);
+    },
+    routeClick(item) {
+      this.$router.push(item.path);
     },
     async getCategory() {
-      const res = await test();
-      console.log(res);
+      let res = await fetchCategoryListForChose();
+      if (res.code == "000000") {
+        this.typeOpitons = res.data;
+      }
     },
     bathConfirm(item) {
       this.currentBath = item;
       this.batchDialogShow = true;
     },
-    batchActions() {
+    aloneActions(action, name, item) {
+      this.aloneItem = item;
+      this.aloneItem.action = action;
+      this.aloneDialog.name = name;
+      this.aloneDialog.show = true;
+    },
+    async aloneActionsDown() {
+      let action = this.aloneItem.action;
+      if (action === "online" || action === "offline") {
+        let body = {
+          id: this.aloneItem.articleId,
+          status: this.aloneItem.status == 0 ? 1 : 0
+        };
+        let res = await lineArticle(body);
+        if (res.code == "000000") {
+          this.aloneDialog.show = false;
+          this.getList();
+        }
+      }
+      if (action === "recom" || action === "unrecom") {
+        let body = {
+          id: this.aloneItem.articleId,
+          recommend: this.aloneItem.recommend == 0 ? 1 : 0
+        };
+        let res = await reArticle(body);
+        if (res.code == "000000") {
+          this.aloneDialog.show = false;
+          this.getList();
+        }
+      }
+      if (action === "delete") {
+        let res = await deleteArticle(this.aloneItem.articleId);
+        if (res.code == "000000") {
+          this.aloneDialog.show = false;
+          this.getList();
+        }
+      }
+    },
+    async batchActions() {
       const item = this.currentBath;
-      console.log(item);
-      console.log(this.multipleSelection);
       if (item.code === "status") {
         // 状态上下线
-        const params = item.param;
+        const params = item.params;
+        let data = new FormData();
+        data.append("articleIds", this.multipleSelection);
+        let res = await lineArticleBath(params.status, data);
+        if (res.code == "000000") {
+          this.batchDialogShow = false;
+          this.getList();
+        }
       }
       if (item.code === "recommend") {
         // 推荐不推荐
-        const params = item.param;
+        // const params = item.params;
+        //  let data = new FormData();
+        // data.append('articleIds',this.multipleSelection)
+        // let res = await unreArticleBath(params.recommend,data);
+        // if(res.code == '000000'){
+        //   this.batchDialogShow = false;
+        //   this.getList()
+        // }
       }
       if (item.code === "delete") {
+        const params = item.params;
+        let data = new FormData();
+        data.append("articleIds", this.multipleSelection);
+        let res = await deleteArticleBatch(data);
+        if (res.code == "000000") {
+          this.batchDialogShow = false;
+          this.getList();
+        }
         // 删除
       }
     },
@@ -272,48 +391,66 @@ export default {
       return "下线";
     },
     onSearch() {
-      console.log(this.listQuery);
+      this.listQuery.page = 1;
+      this.getList();
     },
-    getList() {
-      this.tableData = [];
-      console.log(this.listQuery);
+    async getList() {
       this.listLoading = true;
-      for (let i = 0; i < 20; i++) {
-        this.tableData.push({
-          articleId: i + "",
-          keywords: ["中文", "英文"],
-          onlineTime: "2020-03-21 21:07:14",
-          recommend: Math.random() * 100 > 50 ? 1 : 0,
-          source: "来源",
-          status: Math.random() * 100 > 50 ? 1 : 0,
-          title: "标题标题标题标题标题标题标题标题标题标题标题标",
-          type: "新闻"
-        });
+      console.log(this.listQuery);
+      let body = {
+        startTime:
+          this.listQuery.time && this.listQuery.time.length
+            ? moment(this.listQuery.time[0]).format("YYYY.MM.DD")
+            : "",
+        endTime:
+          this.listQuery.time && this.listQuery.time.length
+            ? moment(this.listQuery.time[1]).format("YYYY.MM.DD")
+            : "",
+        title: this.listQuery.title,
+        type: this.listQuery.type,
+        status: this.listQuery.status,
+        keyword: this.listQuery.keyword,
+        recommend: this.listQuery.recommend
+          ? Number(this.listQuery.recommend)
+          : "",
+        source: this.listQuery.source
+      };
+      let req = this.formatReq(body);
+      console.log(req);
+      let res = await fetchArticleList(this.listQuery, req);
+      if (res.code == "000000") {
+        this.tableData = res.data.contents;
+        this.total = res.data.totalCount;
       }
-      this.total = this.tableData.length;
       this.listLoading = false;
     },
-    formatJson(filterVal) {
-      return this.list.map(v =>
-        filterVal.map(j => {
-          if (j === "timestamp") {
-            return parseTime(v[j]);
-          } else {
-            return v[j];
-          }
-        })
-      );
+    formatReq(req) {
+      let obj = {};
+      for (let key in req) {
+        if (
+          (req[key] &&
+            req[key] !== "" &&
+            req[key] !== undefined &&
+            req[key] !== null &&
+            req[key] !== "all" &&
+            req[key] !== "全部") ||
+          req[key] === 0
+        ) {
+          obj[key] = req[key];
+        }
+      }
+      return obj;
     }
   }
 };
 </script>
 
 <style lang="scss" scoped>
-.row-left{
+.row-left {
   flex: 0 0 50%;
   text-align: left;
 }
-.row-right{
+.row-right {
   flex: 0 0 50%;
   text-align: right;
 }
