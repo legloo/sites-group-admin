@@ -102,7 +102,7 @@ export default {
       this.formModal.headImgDesc = res.headImgDesc;
       this.formModal.summary = res.summary;
       this.formModal.content = res.content;
-      this.keywords_g = res.keywords;
+      this.keywords_g = res.keywords ? res.keywords : [];
       this.upload_img = res.headImgUrl;
     },
     async submit() {
