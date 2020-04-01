@@ -94,7 +94,7 @@
       </el-table-column>
       <el-table-column fixed="right" label="操作" width="400">
         <template slot-scope="{row}">
-          <el-button type="primary" size="mini">预览</el-button>
+          <el-button type="primary" size="mini" @click="preview(row)">预览</el-button>
           <el-button
             v-if="row.status == '1'"
             size="mini"
@@ -109,13 +109,13 @@
           >上线</el-button>
           <el-button
             style="width:80px"
-            v-if="row.recommend == '1'"
+            v-if="row.recommend == '0'"
             type="primary"
             size="mini"
             @click="aloneActions('recom','推荐',row)"
           >推荐</el-button>
           <el-button
-            v-if="row.recommend == '0'"
+            v-if="row.recommend == '1'"
             type="primary"
             size="mini"
             @click="aloneActions('unrecom','推荐',row)"
@@ -280,6 +280,9 @@ export default {
     this.getList();
   },
   methods: {
+    preview(item){
+      window.open(location.origin+`/detail?id=${item.articleId}`)
+    },
     reset() {
       this.listQuery = {
         page: 1,
