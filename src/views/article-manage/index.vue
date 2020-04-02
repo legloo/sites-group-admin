@@ -27,6 +27,7 @@
         </el-form-item>
         <el-form-item label="上线状态">
           <el-select v-model="listQuery.status" placeholder="选择状态">
+            <el-option label="全部" value="all" />
             <el-option label="上线" value="1" />
             <el-option label="下线" value="0" />
           </el-select>
@@ -36,6 +37,7 @@
         </el-form-item>
         <el-form-item label="是否推荐">
           <el-select v-model="listQuery.recommend" placeholder="选择推荐">
+            <el-option label="全部" value="all" />
             <el-option label="推荐" value="1" />
             <el-option label="不推荐" value="0" />
           </el-select>
@@ -86,7 +88,7 @@
       <el-table-column prop="title" label="文章标题" width="200" show-overflow-tooltip />
       <el-table-column prop="type" label="文章分类" width="200" show-overflow-tooltip />
       <el-table-column label="关键词" show-overflow-tooltip width="200">
-        <template slot-scope="scope">{{ scope.row.keywords ? scope.row.keywords.join(';') :''}}</template>
+        <template slot-scope="scope">{{ scope.row.keywords ? scope.row.keywords.join(',') :''}}</template>
       </el-table-column>
       <el-table-column prop="source" label="文章来源" show-overflow-tooltip />
       <el-table-column label="上线状态" show-overflow-tooltip>
@@ -306,6 +308,10 @@ export default {
       let res = await fetchCategoryListForChose();
       if (res.code == "000000") {
         this.typeOpitons = res.data;
+        this.typeOpitons.unshift({
+          id:'all',
+          name:'全部'
+        })
       }
     },
     bathConfirm(item) {
@@ -420,7 +426,7 @@ export default {
       let req = this.formatReq(body);
       let res = await fetchArticleList(this.listQuery, req);
       if (res.code == "000000") {
-        this.tableData = res.data.contents;
+        this.tableData = res.data.contents.sort((a,b) =>new Date(b.gmtCreated).getTime() -new Date(a.gmtCreated).getTime());
         this.total = res.data.totalCount;
       }
       this.listLoading = false;

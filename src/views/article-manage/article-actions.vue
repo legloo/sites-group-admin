@@ -128,7 +128,8 @@ export default {
           this.$store
             .dispatch("tagsView/delView", this.$route)
             .then(({ visitedViews }) => {
-              this.toLastView(visitedViews, this.$route);
+              this.$router.push('list');
+              // this.toLastView(visitedViews, this.$route);
             });
         }
       }
@@ -139,7 +140,8 @@ export default {
           this.$store
             .dispatch("tagsView/delView", this.$route)
             .then(({ visitedViews }) => {
-              this.toLastView(visitedViews, this.$route);
+              this.$router.push('list');
+              // this.toLastView(visitedViews, this.$route);
             });
         }
       }
@@ -178,19 +180,9 @@ export default {
         this.upload_img = res.data;
       }
     },
-    // imageToBase64(file) {
-    //   var reader = new FileReader();
-    //   reader.readAsDataURL(file);
-    //   reader.onload = () => {
-    //     this.upload_img = "https://img.yzcdn.cn/vant/apple-2.jpg";
-    //     // this.upload_img = reader.result;
-    //   };
-    //   reader.onerror = function(error) {
-    //     console.log("Error: ", error);
-    //   };
-    // },
     keywords_actions(item, value) {
       if (item === "add") {
+      if(!this.formModal.keywords) return;
         this.keywords_g.push(this.formModal.keywords);
         this.formModal.keywords = "";
       }
