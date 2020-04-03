@@ -63,8 +63,24 @@
         <el-button @click="route_back">返回</el-button>
       </el-form-item>
     </el-form>
+    <el-upload
+      v-show="false"
+      id="quill-upload"
+      :action="''"
+      name="upload_file"
+      multiple
+      :limit="100"
+      accept=".png, .jpg, .jpeg"
+      list-type="picture"
+      :show-file-list="false"
+      :before-upload="beforeuploadlist"
+    >
+      <el-button size="small" type="primary"></el-button>
+      <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
+    </el-upload>
   </div>
 </template>
+
 
 <script>
 import {
@@ -74,6 +90,7 @@ import {
   getArticleDetail,
   editArticle
 } from "@/api/article-manage";
+import lrz from "lrz";
 export default {
   created() {
     let query = this.$route.query;
@@ -128,7 +145,7 @@ export default {
           this.$store
             .dispatch("tagsView/delView", this.$route)
             .then(({ visitedViews }) => {
-              this.$router.push('list');
+              this.$router.push("list");
               // this.toLastView(visitedViews, this.$route);
             });
         }
@@ -140,7 +157,7 @@ export default {
           this.$store
             .dispatch("tagsView/delView", this.$route)
             .then(({ visitedViews }) => {
-              this.$router.push('list');
+              this.$router.push("list");
               // this.toLastView(visitedViews, this.$route);
             });
         }
@@ -165,24 +182,75 @@ export default {
     route_back() {
       this.$router.go(-1);
     },
-    beforeupload(f) {
+
+    async beforeupload(f) {
       // this.imageToBase64(f);
-      this.imgUpload(f);
+      // this.imgUpload(f);
+      let res = await this.imagezip(f);
+      let imgurl = await this.imgUpload(res.file);
       return false;
     },
-    async imgUpload(f) {
+    async beforeuploadlist(f) {
+      console.log(f); //上传图片之前开启loading
+      let res = await this.imagezip(f);
+      console.log(res);
+      let imgurl = await this.imgUpload(res.data.file,res.name);
+      console.log(imgurl);
+      let quill = this.$refs.myQuillEditor.quill;
+      let length = quill.getSelection().index;
+      // 插入图片  response.data.url为服务器返回的图片地址
+      quill.insertEmbed(length, "image", imgurl);
+      // 调整光标到最后
+      quill.setSelection(length + 1);
+      console.log(this.formModal.content)
+      return false;
+    },
+    uploadError() {
+      //图片上传失败,关闭loading
+      this.$message.error("图片插入失败");
+    },
+    async beforeupload(f) {
+      // this.imageToBase64(f);
+      // this.imgUpload(f);
+      let res = await this.imagezip(f);
+      let imgurl = await this.imgUpload(res.data.file,res.name);
+      this.upload_img = imgurl;
+      return false;
+    },
+    imagezip(f) {
+      let name = f.name;
+      return new Promise((resolve, reject) => {
+        lrz(f)
+          .then(rst => {
+            // 处理成功会执行
+            // rst.file.name = name;
+            console.log(rst);
+            resolve({
+              data:rst,
+              name:name
+            });
+          })
+          .catch(err => {
+            console.log(err);
+            this.$message(err)
+            // reject(err);
+            // 处理失败会执行
+          });
+      });
+    },
+    async imgUpload(f,name) {
       let data = new FormData();
       data.append("file", f);
       data.append("filePath", "images");
-      data.append("suffix", f.name.split(".")[1]);
+      data.append("suffix", name.split(".")[1]);
       let res = await fileUpload(data);
       if (res.code == "000000") {
-        this.upload_img = res.data;
+        return res.data;
       }
     },
     keywords_actions(item, value) {
       if (item === "add") {
-      if(!this.formModal.keywords) return;
+        if (!this.formModal.keywords) return;
         this.keywords_g.push(this.formModal.keywords);
         this.formModal.keywords = "";
       }
@@ -197,17 +265,31 @@ export default {
       artId: "",
       editorOption: {
         modules: {
-          toolbar: [
-            ["bold", "italic", "underline", "strike"], //加粗，斜体，下划线，删除线
-            [{ header: 1 }, { header: 2 }], // 标题，键值对的形式；1、2表示字体大小
-            [{ indent: "-1" }, { indent: "+1" }], // 缩进
-            [{ size: ["small", false, "large", "huge"] }],
-            [{ header: [1, 2, 3, 4, 5, 6, false] }],
-            [{ color: [] }, { background: [] }], // 字体颜色，字体背景颜色
-            [{ align: [] }], //对齐方式
-            ["clean"], //清除字体样式
-            ["link"]
-          ]
+          toolbar: {
+            container: [
+              ["bold", "italic", "underline", "strike"], //加粗，斜体，下划线，删除线
+              [{ header: 1 }, { header: 2 }], // 标题，键值对的形式；1、2表示字体大小
+              [{ indent: "-1" }, { indent: "+1" }], // 缩进
+              [{ size: ["small", false, "large", "huge"] }],
+              [{ header: [1, 2, 3, 4, 5, 6, false] }],
+              [{ color: [] }, { background: [] }], // 字体颜色，字体背景颜色
+              [{ align: [] }], //对齐方式
+              ["clean"], //清除字体样式
+              ["link"],
+              ["image"]
+            ],
+            handlers: {
+              image: function(value) {
+                if (value) {
+                  console.log(value);
+                  // 给个点击触发Element-ui，input框选择图片文件
+                  document.querySelector("#quill-upload input").click();
+                } else {
+                  this.quill.format("image", false);
+                }
+              }
+            }
+          }
         }
       },
       page: [

@@ -283,7 +283,7 @@ export default {
   },
   methods: {
     preview(item){
-      window.open(location.origin+`/detail?id=${item.articleId}`)
+      window.open(location.origin+`/article/${item.articleId}`)
     },
     reset() {
       this.listQuery = {
