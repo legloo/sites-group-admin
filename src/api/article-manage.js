@@ -111,6 +111,14 @@ export function fetchCategoryList() {
   })
 }
 
+export function changeIndex(data) {
+  return request({
+    url: `/api/articleType/swap/showIdx`,
+    method: 'put',
+    data
+  })
+}
+
 // 新增文章分类
 export function createCategory(data) {
   return request({

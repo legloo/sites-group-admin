@@ -4,8 +4,10 @@
       <el-button type="primary" size="small" @click="handleClick(null,'add')">添加</el-button>
     </div>
     <el-table :data="tableData" border style="width: 100%">
-      <el-table-column prop="id" label="id" />
+      <el-table-column type="index" width="50" label="序号"></el-table-column>
+      <!-- <el-table-column prop="id" label="id" /> -->
       <el-table-column prop="name" label="分类名称" />
+      <el-table-column prop="code" label="分类code" />
       <el-table-column label="操作">
         <template slot-scope="scope">
           <el-button type="text" size="small" @click="handleClick(scope.row,'edit')">编辑</el-button>
@@ -15,6 +17,8 @@
             size="small"
             @click="handleClick(scope.row,'delete')"
           >删除</el-button>
+          <el-button type="text" v-if="scope.$index != 0"  size="small" @click="handleIndex(scope.row.id,tableData[scope.$index-1].id)">上移</el-button>
+          <el-button type="text" v-if="scope.$index != tableData.length-1" size="small" @click="handleIndex(scope.row.id,tableData[scope.$index+1].id)">下移</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -23,6 +27,9 @@
       <el-form :model="currentDialogItem" :rules="rules">
         <el-form-item label="分类名称" prop="name">
           <el-input v-model="currentDialogItem.name" />
+        </el-form-item>
+        <el-form-item label="分类code" prop="code">
+          <el-input v-model="currentDialogItem.code" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -47,13 +54,15 @@ import {
   fetchCategoryList,
   createCategory,
   editCategory,
-  deleteCategory
+  deleteCategory,
+  changeIndex
 } from "@/api/article-manage";
 export default {
   data() {
     return {
       rules: {
-        name: [{ required: true, message: "请输入分类名称", trigger: "blur" }]
+        name: [{ required: true, message: "请输入分类名称", trigger: "blur" }],
+        code: [{ required: true, message: "请输入分类code", trigger: "blur" }]
       },
       tableData: [
         {
@@ -69,7 +78,8 @@ export default {
       ],
       currentDialogItem: {
         id: "",
-        name: ""
+        name: "",
+        code: ""
       },
       dialog: {
         title: "",
@@ -92,6 +102,18 @@ export default {
         this.tableData = res.data;
       }
     },
+  async  handleIndex(a,b){
+      console.log(a,b);
+       let datae = new FormData();
+        datae.append("id1", a);
+        datae.append("id2", b);
+        // 有id则为改
+        const res = await changeIndex(datae);
+        console.log(res)
+        if (res.code == "000000") {
+          this.getlist();
+        }
+    },
     handleClick(row, type) {
       if (type === "delete") {
         this.currentDialogItem = row;
@@ -99,6 +121,7 @@ export default {
       }
       if (type === "add") {
         this.currentDialogItem.name = "";
+        this.currentDialogItem.code = "";
         this.dialog.title = "添加分类";
         this.dialog.show = true;
       }
@@ -113,13 +136,15 @@ export default {
         let datae = new FormData();
         datae.append("id", this.currentDialogItem.id);
         datae.append("type", this.currentDialogItem.name);
+        datae.append("code", this.currentDialogItem.code);
         // 有id则为改
-        const res = await editCategory(this.currentDialogItem.id,datae);
+        const res = await editCategory(this.currentDialogItem.id, datae);
         if (res.code == "000000") {
           this.$message.success(res.msg);
           this.currentDialogItem = {
             id: "",
-            name: ""
+            name: "",
+            code: ""
           };
           this.dialog.show = false;
           this.getlist();
@@ -130,12 +155,14 @@ export default {
         // 无id则为新增
         let data = new FormData();
         data.append("type", this.currentDialogItem.name);
+        data.append("code", this.currentDialogItem.code);
         const res = await createCategory(data);
         if (res.code == "000000") {
           this.$message.success(res.msg);
           this.currentDialogItem = {
             id: "",
-            name: ""
+            name: "",
+            code: ""
           };
           this.dialog.show = false;
           this.getlist();
@@ -146,13 +173,13 @@ export default {
     },
     async deleteItem() {
       const res = await deleteCategory({ id: this.currentDialogItem.id });
-       if (res.code == "000000") {
-          this.$message.success(res.msg);
-          this.deleteDialog.show = false;
-          this.getlist();
-        } else {
-          this.$message.error(res.msg);
-        }
+      if (res.code == "000000") {
+        this.$message.success(res.msg);
+        this.deleteDialog.show = false;
+        this.getlist();
+      } else {
+        this.$message.error(res.msg);
+      }
     }
   }
 };
