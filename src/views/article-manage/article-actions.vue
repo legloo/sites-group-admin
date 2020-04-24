@@ -53,7 +53,7 @@
       <el-form-item label="摘要：">
         <el-input type="textarea" :rows="5" placeholder="请输入内容" v-model="formModal.summary"></el-input>
       </el-form-item>
-      <el-form-item label="摘要：">
+      <el-form-item label="正文：">
         <quill-editor v-model="formModal.content" ref="myQuillEditor" :options="editorOption"></quill-editor>
       </el-form-item>
 
